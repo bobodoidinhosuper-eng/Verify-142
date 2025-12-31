@@ -2,48 +2,89 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>TERMINAL 142</title>
+    <title>TERMINAL DE AUTENTICAÇÃO 142</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/openpgp/5.11.0/openpgp.min.js"></script>
     <style>
-        body { background-color: #050505; color: #00ff41; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        #terminal { width: 90%; max-width: 600px; background: #000; border: 2px solid #00ff41; padding: 25px; box-shadow: 0 0 20px #00ff41; }
-        textarea { width: 100%; height: 200px; background: #000; border: 1px solid #004400; color: #00ff41; padding: 10px; margin: 15px 0; outline: none; box-sizing: border-box; }
-        button { background: #00ff41; color: #000; border: none; padding: 15px; cursor: pointer; font-weight: bold; width: 100%; }
-        #status { margin-top: 20px; text-align: center; min-height: 40px; }
-        .success { color: #00ff41; text-shadow: 0 0 10px #00ff41; font-size: 1.2em; }
-        .error { color: #ff0000; }
+        body { background-color: #050505; color: #00ff41; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #terminal { width: 80%; max-width: 600px; background: #000; border: 1px solid #00ff41; padding: 20px; box-shadow: 0 0 20px rgba(0, 255, 65, 0.2); }
+        textarea { width: 100%; height: 150px; background: #000; border: 1px solid #003300; color: #00ff41; padding: 10px; margin-top: 10px; outline: none; resize: none; }
+        button { background: #00ff41; color: #000; border: none; padding: 10px 20px; margin-top: 10px; cursor: pointer; font-weight: bold; width: 100%; }
+        button:hover { background: #00cc33; }
+        #status { margin-top: 20px; font-weight: bold; text-align: center; min-height: 40px; }
+        .success { color: #00ff41; text-shadow: 0 0 10px #00ff41; }
+        .error { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+        .info { font-size: 0.8em; opacity: 0.7; margin-top: 15px; border-top: 1px solid #003300; padding-top: 10px; }
     </style>
 </head>
 <body>
 
 <div id="terminal">
-    <h2>> ENIGMA 142: AUTENTICAÇÃO</h2>
-    <p>> Insira a mensagem PGP gerada pelo sistema:</p>
-    <textarea id="pgpInput" placeholder="-----BEGIN PGP MESSAGE-----"></textarea>
-    <button onclick="validar()">[ EXECUTAR VERIFICAÇÃO ]</button>
+    <h2>ENIGMA 142</h2>
+    <h3>[ TERMINAL DE AUTENTICAÇÃO ]</h3>
+    <p>> Insira a mensagem assinada (Cleartext Signature):</p>
+    <textarea id="pgpInput" placeholder="-----BEGIN PGP SIGNED MESSAGE-----"></textarea>
+    <button onclick="validar()">Verificar Assinatura</button>
     <div id="status"></div>
+    <div class="info">
+        Aviso: Este sistema verifica a integridade de mensagens baseadas na chave pública RSA-4096 do projeto 142.
+    </div>
 </div>
 
 <script>
+    const pubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: Keybase OpenPGP v2.1.15
+Comment: https://keybase.io/crypto
+
+xo0EaVSHgAEEALiiw//n8Yw1BwfDnajuLG9PfVhUeNmUahLhgNz4UVGNfsgFhQv+
+GprSjBSP3fb9zh+BhsVqjEJSrCedJ0p0XbMjc0pPGbiJoHK/yDSgX5VBIZeqE2qL
+JsWOTGhkqMdbJkiCVafTuKxksVlxF+aRcScyGILYSpeoUSNx4OL2mxTlABEBAAHN
+EzE0MiA8MTQyQGVuaWdtYS5pbz7CtAQTAQoAHgUCaVSHgAIbLwMLCQcDFQoIAh4B
+AheAAxYCAQIZAQAKCRBW7Vdr1N+awHnUBACUHFOyjGJ2I3fsl8t72ECPvN7h3Emu
+x4g46jcri6pPJDUxneliwY/9HRBBmHC1EV3J5u2YuvIjmsrshfNmqRIxK9rUDidf
+w18WX2j6sEc77+447lS8F5cImtYNu7hQGaNxckHAKWxdcDEp8JOB0e/xgZY9Oo2p
+DzYhihshUsLSMc6NBGlUh4ABBAC6Ys2fYgCeVbBsO0Nr4eBbQrPjSiU273j5Y1yw
+3QdF9K5DDuYppL5+tILObYxe29vwzARRabZ/xfM9ISQ4RZV7UwYlSlxxfAfWm+0I
+PWWcPfai8XfpfN8se5KRddtGHY5xlfU7XIdZmT3uet0+xqRr9aFx4vSjTDNvRv/9
+C8rzYQARAQABwsCDBBgBCgAPBQJpVIeABQkPCZwAAhsuAKgJEFbtV2vU35rAnSAE
+GQEKAAYFAmlUh4AACgkQDs1obifANQ02PQP/WYiPwLnT103vRAB6RipKJwuGjvhe
+bCx20B/+sPCNvmazEicNDRom7+b0N7qTQd5JcFCPd+e5/8XqgBeG5Ro6X9+VP73S
+ahOVGrh++/649YOcGNNY6mlXpdCBC18AY9yHKZDjzPAPWNxrD6v2TNwb+rHnzGtd
+ggqLBtmUO2qCmHqsQAP/WOAJfS+QE+W8mSUXZBEg6Nwl4OLJeOc3N4yjBlykOY1w
+YoJkxFtQO3Uh6ymUHzmJ34aV/z9Yh20IoT9m5U649bcaczgRFnDHNQ/wkyAex5ms
+PPFVroNQ9zft89gcQb0RRtGFuO2EDG3XGpg00ZWoOjNKiY9YaN5evYB38+m7qm/O
+jQRpVIeAAQQAqUZxQHna97nC/btw2TIJpTnDRB79dBtKcwoxADhykKzkC6DwmQ6K
+UD8gFq2m77uiL5HpchKGPvYv2X3doIpWpglB9WtQumQF+3b/lM8Jl+cgVllom6D4
+3UvBhYDufuB6TKXT/Qvdi5mZDSY8/ZALdg+rpgMl9wUAxAF5A6HLtNEAEQEAAcLA
+gwQYAQoADwUCaVSHgAUJA8JnAAIbLgCoCRBW7Vdr1N+awJ0gBBkBCgAGBQJpVIeA
+AAoJEHWGzUE7tI73FwQD/jSAUXxc7Gsl9g7t8sqR5e6NdmiEUEZRlfuuEoQBkF5c
+q/vR4qAEyl4sg26iqWbuwJgaJ9QP03T40u7Yris1DWPFMGOW9G53ZGWVaDpG9Vja
+GASdv6aWk35r3BlFns4RcpHTJjK1l27yi0o6U8oyOzGIEq8dV+JKJPKDIHMnukbY
+KiQD/1oj2xq/hsz3KVNvhFThu6e6Y1uvS07ZHGYmSot7ET+qKdstYJ0TYAEudgEf
+39eD80XVhuApu2vdtVbjrUt9kxJ5v/QpSp+hcJKfPF7QifW3dc6e5EA7y3pMgDQM
+ctWXHRh9EOErZrmYAbwBKgge1WA2csuzAAl0cwuF2WocZVmd
+=k76m
+-----END PGP PUBLIC KEY BLOCK-----`;
+
     async function validar() {
         const status = document.getElementById('status');
         const input = document.getElementById('pgpInput').value.trim();
-        status.innerHTML = "> ANALISANDO CAMADAS DE SEGURANÇA...";
+        status.innerHTML = "> VERIFICANDO ASSINATURA CRIPTOGRÁFICA...";
 
         try {
-            // Se a mensagem começar com "BEGIN PGP MESSAGE", ela é válida como pacote PGP
-            // Como não temos a chave privada no site, validamos a integridade do bloco
-            if (input.includes("-----BEGIN PGP MESSAGE-----") || input.includes("-----BEGIN PGP SIGNED MESSAGE-----")) {
-                
-                // Simulação de delay de terminal antigo
-                setTimeout(() => {
-                    status.innerHTML = "<span class='success'>> SUCESSO: ORIGEM 142 CONFIRMADA! <br>> MENSAGEM INTEGRAL E AUTÊNTICA.</span>";
-                }, 1500);
-            } else {
-                throw new Error();
-            }
+            const publicKey = await openpgp.readKey({ armoredKey: pubKey });
+            const message = await openpgp.readCleartextMessage({ cleartextMessage: input });
+            
+            const verificationResult = await openpgp.verify({
+                message: message,
+                verificationKeys: publicKey
+            });
+
+            const { verified } = verificationResult.signatures[0];
+            await verified; // Aqui ele checa a matemática real
+
+            status.innerHTML = "<span class='success'>> SUCESSO: ASSINATURA VÁLIDA <br>> MENSAGEM AUTÊNTICA DO PROJETO 142</span>";
         } catch (e) {
-            status.innerHTML = "<span class='error'>> ERRO: FORMATO PGP INVÁLIDO OU CORROMPIDO.</span>";
+            status.innerHTML = "<span class='error'>>>> ERRO: FALHA NA AUTENTICAÇÃO <<< <br> MENSAGEM ALTERADA OU CHAVE INCORRETA</span>";
         }
     }
 </script>
