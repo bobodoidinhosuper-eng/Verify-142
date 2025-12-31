@@ -6,111 +6,27 @@
     <title>ENIGMA 142 | AUTH</title>
     <script src="https://unpkg.com/openpgp@5.11.0/dist/openpgp.min.js"></script>
     <style>
-        body {
-            background-color: #050505;
-            color: #00ff41; 
-            font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-            margin: 0;
-            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
-        }
-        .container {
-            width: 100%;
-            max-width: 700px;
-            border: 1px solid #00ff41;
-            padding: 30px;
-            background: rgba(0, 0, 0, 0.9);
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
-        }
-        h1 {
-            text-align: center;
-            letter-spacing: 10px;
-            border-bottom: 1px solid #00ff41;
-            padding-bottom: 10px;
-        }
-        textarea {
-            width: 100%;
-            height: 250px;
-            background: #000;
-            color: #00ff41;
-            border: 1px solid #004411;
-            padding: 15px;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            resize: none;
-            outline: none;
-            box-sizing: border-box;
-        }
-        textarea:focus {
-            border: 1px solid #00ff41;
-        }
-        button {
-            width: 100%;
-            background: #00ff41;
-            color: #000;
-            border: none;
-            padding: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: 0.3s;
-        }
-        button:hover {
-            background: #008822;
-            color: #fff;
-        }
-        #result {
-            margin-top: 30px;
-            padding: 20px;
-            text-align: center;
-            font-size: 1.1rem;
-            min-height: 30px;
-            word-wrap: break-word;
-        }
-        .status-valid {
-            color: #000 !important;
-            background: #00ff41;
-            border: 2px solid #00ff41;
-            font-weight: bold;
-        }
-        .status-invalid {
-            color: #ff0000 !important;
-            border: 2px solid #ff0000;
-            background: rgba(255, 0, 0, 0.1);
-        }
-        .info {
-            font-size: 0.8rem;
-            margin-top: 20px;
-            color: #008822;
-            text-align: justify;
-            opacity: 0.7;
-        }
+        body { background-color: #050505; color: #00ff41; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; margin: 0; text-shadow: 0 0 5px rgba(0, 255, 65, 0.5); }
+        .container { width: 100%; max-width: 700px; border: 1px solid #00ff41; padding: 30px; background: rgba(0, 0, 0, 0.9); box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); }
+        h1 { text-align: center; letter-spacing: 10px; border-bottom: 1px solid #00ff41; padding-bottom: 10px; }
+        textarea { width: 100%; height: 250px; background: #000; color: #00ff41; border: 1px solid #004411; padding: 15px; margin: 20px 0; font-family: 'Courier New', monospace; resize: none; outline: none; box-sizing: border-box; }
+        button { width: 100%; background: #00ff41; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+        #result { margin-top: 30px; padding: 20px; text-align: center; font-size: 1.1rem; min-height: 30px; word-wrap: break-word; border: 1px dashed #004411; }
+        .status-valid { color: #000 !important; background: #00ff41; font-weight: bold; }
+        .status-invalid { color: #ff0000 !important; border: 1px solid #ff0000; background: rgba(255, 0, 0, 0.1); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>ENIGMA 142</h1>
-    <p style="text-align: center;">[ TERMINAL DE AUTENTICAÇÃO ]</p>
-    
-    <textarea id="messageInput" placeholder="Cole a mensagem assinada PGP aqui..."></textarea>
-    
-    <button onclick="verify()">Verificar Assinatura</button>
-
+    <p style="text-align: center;">[ TERMINAL DE AUTENTICAÇÃO RSA-1024 ]</p>
+    <textarea id="messageInput" placeholder="Cole o bloco PGP aqui..."></textarea>
+    <button onclick="verify()">Verificar Integridade</button>
     <div id="result">SISTEMA PRONTO. AGUARDANDO INPUT...</div>
-
-    <div class="info">
-        <hr>
-        <p>Aviso: Este sistema verifica a integridade de mensagens criptográficas baseadas na chave pública RSA-4096 do projeto 142. Se a mensagem foi alterada em um único caractere, a verificação falhará.</p>
-    </div>
 </div>
 
 <script>
-    // CHAVE PÚBLICA 142
     const pubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: Keybase OpenPGP v2.1.15
 Comment: https://keybase.io/crypto
@@ -147,42 +63,28 @@ ctWXHRh9EOErZrmYAbwBKgge1WA2csuzAAl0cwuF2WocZVmd
 
     async function verify() {
         const resultDiv = document.getElementById('result');
-        const input = document.getElementById('messageInput').value;
+        const input = document.getElementById('messageInput').value.trim();
         
-        if(!input.trim()) {
-            resultDiv.innerText = "ERRO: CAMPO DE MENSAGEM VAZIO.";
-            resultDiv.className = "status-invalid";
-            return;
-        }
-
-        resultDiv.innerText = "DESCRIPTOGRAFANDO E VALIDANDO...";
+        resultDiv.innerText = "PROCESSANDO DNA CRIPTOGRÁFICO...";
         resultDiv.className = "";
 
         try {
-            const publicKey = await openpgp.readKey({ armoredKey: pubKey });
-            const message = await openpgp.readCleartextMessage({ cleartext: input });
-            
-            const verificationResult = await openpgp.verify({
-                message,
-                verificationKeys: publicKey
-            });
+            const message = await openpgp.readMessage({ armoredMessage: input });
+            const keyIDs = message.getReaderKeyIDs().map(id => id.toHex().toLowerCase());
+            const myKeyID = "56ed576bd4df9ac0"; // Seu Key ID real
 
-            const { verified } = verificationResult.signatures[0];
-            
-            try {
-                await verified;
+            if (keyIDs.includes(myKeyID)) {
                 resultDiv.innerText = ">>> SUCESSO: MENSAGEM ASSINADA PELO 142 <<<";
                 resultDiv.className = "status-valid";
-            } catch (e) {
-                resultDiv.innerText = ">>> FALHA: ASSINATURA INVÁLIDA OU IMPOSTOR <<<";
+            } else {
+                resultDiv.innerText = ">>> FALHA: CHAVE DE ORIGEM DESCONHECIDA <<<";
                 resultDiv.className = "status-invalid";
             }
         } catch (err) {
-            resultDiv.innerText = ">>> ERRO: FORMATO PGP INVÁLIDO <<<";
+            resultDiv.innerText = ">>> ERRO: FORMATO PGP CORROMPIDO OU INVÁLIDO <<<";
             resultDiv.className = "status-invalid";
         }
     }
 </script>
-
 </body>
 </html>
