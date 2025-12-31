@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENIGMA 142 | AUTH</title>
+    <script src="https://unpkg.com/openpgp@5.11.0/dist/openpgp.min.js"></script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #00ff41; 
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+        .container {
+            width: 100%;
+            max-width: 700px;
+            border: 1px solid #00ff41;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+        h1 {
+            text-align: center;
+            letter-spacing: 10px;
+            border-bottom: 1px solid #00ff41;
+            padding-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 250px;
+            background: #000;
+            color: #00ff41;
+            border: 1px solid #004411;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            resize: none;
+            outline: none;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            border: 1px solid #00ff41;
+        }
+        button {
+            width: 100%;
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #008822;
+            color: #fff;
+        }
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            min-height: 30px;
+            word-wrap: break-word;
+        }
+        .status-valid {
+            color: #000 !important;
+            background: #00ff41;
+            border: 2px solid #00ff41;
+            font-weight: bold;
+        }
+        .status-invalid {
+            color: #ff0000 !important;
+            border: 2px solid #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        .info {
+            font-size: 0.8rem;
+            margin-top: 20px;
+            color: #008822;
+            text-align: justify;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ENIGMA 142</h1>
+    <p style="text-align: center;">[ TERMINAL DE AUTENTICAÇÃO ]</p>
+    
+    <textarea id="messageInput" placeholder="Cole a mensagem assinada PGP aqui..."></textarea>
+    
+    <button onclick="verify()">Verificar Assinatura</button>
+
+    <div id="result">SISTEMA PRONTO. AGUARDANDO INPUT...</div>
+
+    <div class="info">
+        <hr>
+        <p>Aviso: Este sistema verifica a integridade de mensagens criptográficas baseadas na chave pública RSA-4096 do projeto 142. Se a mensagem foi alterada em um único caractere, a verificação falhará.</p>
+    </div>
+</div>
+
+<script>
+    // CHAVE PÚBLICA 142
+    const pubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: Keybase OpenPGP v2.1.15
+Comment: https://keybase.io/crypto
+
+xo0EaVSHgAEEALiiw//n8Yw1BwfDnajuLG9PfVhUeNmUahLhgNz4UVGNfsgFhQv+
+GprSjBSP3fb9zh+BhsVqjEJSrCedJ0p0XbMjc0pPGbiJoHK/yDSgX5VBIZeqE2qL
+JsWOTGhkqMdbJkiCVafTuKxksVlxF+aRcScyGILYSpeoUSNx4OL2mxTlABEBAAHN
+EzE0MiA8MTQyQGVuaWdtYS5pbz7CtAQTAQoAHgUCaVSHgAIbLwMLCQcDFQoIAh4B
+AheAAxYCAQIZAQAKCRBW7Vdr1N+awHnUBACUHFOyjGJ2I3fsl8t72ECPvN7h3Emu
+x4g46jcri6pPJDUxneliwY/9HRBBmHC1EV3J5u2YuvIjmsrshfNmqRIxK9rUDidf
+w18WX2j6sEc77+447lS8F5cImtYNu7hQGaNxckHAKWxdcDEp8JOB0e/xgZY9Oo2p
+DzYhihshUsLSMc6NBGlUh4ABBAC6Ys2fYgCeVbBsO0Nr4eBbQrPjSiU273j5Y1yw
+3QdF9K5DDuYppL5+tILObYxe29vwzARRabZ/xfM9ISQ4RZV7UwYlSlxxfAfWm+0I
+PWWcPfai8XfpfN8se5KRddtGHY5xlfU7XIdZmT3uet0+xqRr9aFx4vSjTDNvRv/9
+C8rzYQARAQABwsCDBBgBCgAPBQJpVIeABQkPCZwAAhsuAKgJEFbtV2vU35rAnSAE
+GQEKAAYFAmlUh4AACgkQDs1obifANQ02PQP/WYiPwLnT103vRAB6RipKJwuGjvhe
+bCx20B/+sPCNvmazEicNDRom7+b0N7qTQd5JcFCPd+e5/8XqgBeG5Ro6X9+VP73S
+ahOVGrh++/649YOcGNNY6mlXpdCBC18AY9yHKZDjzPAPWNxrD6v2TNwb+rHnzGtd
+ggqLBtmUO2qCmHqsQAP/WOAJfS+QE+W8mSUXZBEg6Nwl4OLJeOc3N4yjBlykOY1w
+YoJkxFtQO3Uh6ymUHzmJ34aV/z9Yh20IoT9m5U649bcaczgRFnDHNQ/wkyAex5ms
+PPFVroNQ9zft89gcQb0RRtGFuO2EDG3XGpg00ZWoOjNKiY9YaN5evYB38+m7qm/O
+jQRpVIeAAQQAqUZxQHna97nC/btw2TIJpTnDRB79dBtKcwoxADhykKzkC6DwmQ6K
+UD8gFq2m77uiL5HpchKGPvYv2X3doIpWpglB9WtQumQF+3b/lM8Jl+cgVllom6D4
+3UvBhYDufuB6TKXT/Qvdi5mZDSY8/ZALdg+rpgMl9wUAxAF5A6HLtNEAEQEAAcLA
+gwQYAQoADwUCaVSHgAUJA8JnAAIbLgCoCRBW7Vdr1N+awJ0gBBkBCgAGBQJpVIeA
+AAoJEHWGzUE7tI73FwQD/jSAUXxc7Gsl9g7t8sqR5e6NdmiEUEZRlfuuEoQBkF5c
+q/vR4qAEyl4sg26iqWbuwJgaJ9QP03T40u7Yris1DWPFMGOW9G53ZGWVaDpG9Vja
+GASdv6aWk35r3BlFns4RcpHTJjK1l27yi0o6U8oyOzGIEq8dV+JKJPKDIHMnukbY
+KiQD/1oj2xq/hsz3KVNvhFThu6e6Y1uvS07ZHGYmSot7ET+qKdstYJ0TYAEudgEf
+39eD80XVhuApu2vdtVbjrUt9kxJ5v/QpSp+hcJKfPF7QifW3dc6e5EA7y3pMgDQM
+ctWXHRh9EOErZrmYAbwBKgge1WA2csuzAAl0cwuF2WocZVmd
+=k76m
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+    async function verify() {
+        const resultDiv = document.getElementById('result');
+        const input = document.getElementById('messageInput').value;
+        
+        if(!input.trim()) {
+            resultDiv.innerText = "ERRO: CAMPO DE MENSAGEM VAZIO.";
+            resultDiv.className = "status-invalid";
+            return;
+        }
+
+        resultDiv.innerText = "DESCRIPTOGRAFANDO E VALIDANDO...";
+        resultDiv.className = "";
+
+        try {
+            const publicKey = await openpgp.readKey({ armoredKey: pubKey });
+            const message = await openpgp.readCleartextMessage({ cleartext: input });
+            
+            const verificationResult = await openpgp.verify({
+                message,
+                verificationKeys: publicKey
+            });
+
+            const { verified } = verificationResult.signatures[0];
+            
+            try {
+                await verified;
+                resultDiv.innerText = ">>> SUCESSO: MENSAGEM ASSINADA PELO 142 <<<";
+                resultDiv.className = "status-valid";
+            } catch (e) {
+                resultDiv.innerText = ">>> FALHA: ASSINATURA INVÁLIDA OU IMPOSTOR <<<";
+                resultDiv.className = "status-invalid";
+            }
+        } catch (err) {
+            resultDiv.innerText = ">>> ERRO: FORMATO PGP INVÁLIDO <<<";
+            resultDiv.className = "status-invalid";
+        }
+    }
+</script>
+
+</body>
+</html>
