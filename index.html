@@ -3,131 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E142 - Verificador de Assinatura (Comunidade)</title>
-    
+    <title>Verificador de Mensagens Enigma 142</title>
     <script src="openpgp.min.js"></script>
-    
     <style>
         body {
-            background-color: #0a0a0a;
-            color: #dcdcdc;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            max-width: 900px;
+            max-width: 700px;
             margin: 40px auto;
             padding: 0 20px;
+            background-color: #f4f4f9;
+            color: #333;
+            line-height: 1.6;
         }
-
         .header {
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid #444;
             margin-bottom: 30px;
             padding-bottom: 10px;
         }
-
-        h1 {
-            color: #ffffff;
-            font-size: 1.8rem;
-            margin: 0;
-            letter-spacing: 1px;
+        h1 { font-size: 1.8rem; color: #222; }
+        p { font-size: 0.95rem; color: #555; }
+        
+        .box {
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .disclaimer {
-            font-size: 0.85rem;
-            color: #888;
-            font-style: italic;
-        }
-
-        .section-label {
-            display: block;
-            margin: 20px 0 8px;
-            font-weight: bold;
-            color: #aaa;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-        }
-
+        
+        label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; }
         textarea {
             width: 100%;
-            height: 180px;
-            background: #121212;
-            color: #e0e0e0;
-            border: 1px solid #333;
+            height: 150px;
+            margin-bottom: 20px;
             padding: 12px;
-            font-family: 'Consolas', 'Monaco', monospace;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
             box-sizing: border-box;
-            border-radius: 4px;
-            outline: none;
-            transition: border 0.3s;
+            resize: vertical;
         }
-
-        textarea:focus {
-            border-color: #555;
-        }
-
+        
         button {
-            margin-top: 20px;
             padding: 12px 24px;
-            background-color: #222;
-            color: #fff;
-            border: 1px solid #444;
-            cursor: pointer;
-            font-weight: bold;
+            background-color: #34495e;
+            color: white;
+            border: none;
             border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
             width: 100%;
-            transition: all 0.2s;
+            transition: background 0.3s;
         }
-
-        button:hover {
-            background-color: #333;
-            border-color: #666;
-        }
-
+        button:hover { background-color: #2c3e50; }
+        
         .result {
             margin-top: 25px;
-            padding: 20px;
+            padding: 15px;
             border-radius: 4px;
             display: none;
-            font-family: monospace;
-            border-left: 6px solid;
+            font-weight: 500;
+            text-align: center;
         }
-
-        /* Cores de status da comunidade */
-        .status-checking { background: #1a1a1a; border-color: #555; color: #ccc; }
-        .status-valid { background: #0a210f; border-color: #2ecc71; color: #2ecc71; }
-        .status-invalid { background: #210a0a; border-color: #e74c3c; color: #e74c3c; }
-
-        .info-box {
-            background: #151515;
-            padding: 15px;
-            margin-top: 30px;
-            border: 1px solid #222;
-            font-size: 0.9rem;
+        .verified { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #888;
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>ENIGMA 142 // TOOLSET</h1>
-        <p class="disclaimer">Ferramenta independente para verificação de comunicações assinadas.</p>
+        <h1>Verificar mensagem pgp do enigma 142</h1>
+        <p>Eu criei esse site para ajudar as pessoas a confirmarem se a mensagem assinada pgp é do enigma oficial. Use o PGP para confirmar se a mensagem veio mesmo da fonte oficial do Enigma 142.</p>
     </div>
 
-    <p>Use este validador para confirmar se uma mensagem atribuída ao <b>142</b> é autêntica. Cole a mensagem completa e a chave pública correspondente.</p>
+    <div class="box">
+        <label for="signedMessage">Mensagem Assinada:</label>
+        <textarea id="signedMessage" placeholder="Cole aqui o texto que começa com -----BEGIN PGP SIGNED MESSAGE-----"></textarea>
 
-    <label class="section-label" for="signedMessage">Mensagem Assinada (PGP Signed Message):</label>
-    <textarea id="signedMessage" placeholder="-----BEGIN PGP SIGNED MESSAGE-----"></textarea>
+        <label for="publicKey">Chave Pública:</label>
+        <textarea id="publicKey" placeholder="Cole aqui a chave pública oficial (BEGIN PGP PUBLIC KEY BLOCK)"></textarea>
 
-    <label class="section-label" for="publicKey">Chave Pública do Remetente:</label>
-    <textarea id="publicKey" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----"></textarea>
+        <button onclick="verifyMessage()">Verificar Assinatura</button>
 
-    <button onclick="verifyMessage()">ANALISAR ASSINATURA</button>
-
-    <div id="resultArea" class="result"></div>
-
-    <div class="info-box">
-        <b>Nota dos Investigadores:</b><br>
-        Esta ferramenta processa a criptografia localmente no seu navegador. Nenhuma chave ou mensagem é enviada para servidores externos. Proteja sua privacidade.
+        <div id="resultArea" class="result"></div>
     </div>
+
+    <p class="footer">Feito por um fan do enigma para ajudar a resolver. Não sou o criador do 142.</p>
 
     <script>
         async function verifyMessage() {
@@ -135,19 +103,25 @@
             const publicKeyArmored = document.getElementById('publicKey').value.trim();
             const resultArea = document.getElementById('resultArea');
 
+            resultArea.style.display = 'block';
+            resultArea.className = 'result';
+            resultArea.textContent = 'Verificando...';
+
+            // Verificação básica de preenchimento
             if (!signedMessage || !publicKeyArmored) {
-                resultArea.style.display = 'block';
-                resultArea.className = 'result status-invalid';
-                resultArea.textContent = 'Erro: É necessário preencher ambos os campos para validação.';
+                resultArea.className = 'result error';
+                resultArea.textContent = 'Você não inseriu nada ou faltam informações.';
                 return;
             }
 
-            resultArea.style.display = 'block';
-            resultArea.className = 'result status-checking';
-            resultArea.textContent = 'Calculando hashes e verificando integridade...';
+            // Verifica se a biblioteca carregou
+            if (typeof openpgp === 'undefined') {
+                resultArea.className = 'result error';
+                resultArea.textContent = 'Erro ao carregar os componentes de verificação. Tente atualizar a página.';
+                return;
+            }
 
             try {
-                // Leitura da chave e mensagem usando a biblioteca local
                 const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
                 const message = await openpgp.readCleartextMessage({ cleartextMessage: signedMessage });
 
@@ -160,16 +134,16 @@
                 
                 try {
                     await verified;
-                    resultArea.className = 'result status-valid';
-                    resultArea.innerHTML = '<strong>VERIFICAÇÃO CONCLUÍDA</strong><br>Resultado: A assinatura é VÁLIDA e pertence ao dono desta chave.';
+                    resultArea.className = 'result verified';
+                    resultArea.textContent = 'A mensagem é válida e é oficial do Enigma 142.';
                 } catch (e) {
-                    resultArea.className = 'result status-invalid';
-                    resultArea.innerHTML = '<strong>ALERTA DE SEGURANÇA</strong><br>Resultado: A assinatura é INVÁLIDA. O conteúdo pode ter sido alterado.';
+                    resultArea.className = 'result error';
+                    resultArea.textContent = 'A mensagem assinada não é oficial.';
                 }
 
             } catch (error) {
-                resultArea.className = 'result status-invalid';
-                resultArea.textContent = `Erro técnico: ${error.message}`;
+                resultArea.className = 'result error';
+                resultArea.textContent = 'Algo deu errado. Verifique se você colou a mensagem e a chave corretamente.';
             }
         }
     </script>
