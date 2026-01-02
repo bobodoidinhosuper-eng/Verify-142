@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROTOCOL 142 // VERIFIER</title>
+    <script src="openpgp.min.js"></script>
+    <style>
+        :root {
+            --accent: #00f2ff; /* Azul Ciano 142 */
+            --bg: #050508;
+            --panel: rgba(10, 10, 15, 0.9);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--accent);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            /* Efeito de grade de fundo */
+            background-image: linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            border: 2px solid var(--accent);
+            padding: 40px;
+            background: var(--panel);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.1), inset 0 0 10px rgba(0, 242, 255, 0.05);
+            backdrop-filter: blur(5px);
+            position: relative;
+        }
+
+        /* Cantoneiras decorativas */
+        .container::before {
+            content: "142";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--bg);
+            padding: 0 10px;
+            font-weight: bold;
+            letter-spacing: 5px;
+        }
+
+        h1 {
+            text-align: center;
+            letter-spacing: 8px;
+            margin-top: 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--accent);
+        }
+
+        p {
+            text-align: center;
+            font-size: 0.85em;
+            opacity: 0.7;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 160px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            margin-bottom: 25px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 20px;
+            background-color: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            transition: 0.4s;
+            font-size: 1.1em;
+        }
+
+        button:hover {
+            background-color: var(--accent);
+            color: #000;
+            box-shadow: 0 0 25px var(--accent);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-left: 5px solid var(--accent);
+            background: rgba(255, 255, 255, 0.02);
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .verified { border-left-color: #00ff88; color: #00ff88; background: rgba(0, 255, 136, 0.05); }
+        .error { border-left-color: #ff3e3e; color: #ff3e3e; background: rgba(255, 62, 62, 0.05); }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.7em;
+            letter-spacing: 3px;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PROTOCOL 142</h1>
+        <p>A autenticidade é o único caminho para a próxima fase.</p>
+
+        <label for="signedMessage">> MENSAGEM ASSINADA:</label>
+        <textarea id="signedMessage" placeholder="Paste the PGP message..."></textarea>
+
+        <label for="publicKey">> CHAVE PÚBLICA 142:</label>
+        <textarea id="publicKey" placeholder="Paste the public key..."></textarea>
+
+        <button onclick="verifyMessage()">AUTENTICAR IDENTIDADE</button>
+
+        <div id="resultArea" class="result"></div>
+        
+        <div class="footer">SINCE 1.4.2 // ENCRYPTED DATA STREAM</div>
+    </div>
+
+    <script>
+        async function verifyMessage() {
+            const signedMessage = document.getElementById('signedMessage').value;
+            const publicKeyArmored = document.getElementById('publicKey').value;
+            const resultArea = document.getElementById('resultArea');
+
+            resultArea.style.display = 'block';
+            resultArea.className = 'result';
+            resultArea.textContent = 'ANALISANDO ASSINATURA...';
+
+            if (!signedMessage || !publicKeyArmored) {
+                resultArea.className = 'result error';
+                resultArea.textContent = 'ERRO: Ambos os campos são necessários para validação.';
+                return;
+            }
+
+            try {
+                const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
+                const message = await openpgp.readCleartextMessage({ cleartextMessage: signedMessage });
+
+                const verificationResult = await openpgp.verify({
+                    message,
+                    verificationKeys: publicKey
+                });
+
+                const { verified } = verificationResult.signatures[0];
+                
+                try {
+                    await verified;
+                    resultArea.className = 'result verified';
+                    resultArea.innerHTML = '<strong>SUCESSO:</strong> A ASSINATURA FOI VALIDADA PELO PROTOCOLO 142. ORIGEM CONFIRMADA.';
+                } catch (e) {
+                    resultArea.className = 'result error';
+                    resultArea.innerHTML = '<strong>FALHA:</strong> ASSINATURA CORROMPIDA OU NÃO PERTENCE AO PROTOCOLO 142.';
+                }
+
+            } catch (error) {
+                resultArea.className = 'result error';
+                resultArea.textContent = `ERRO DE SISTEMA: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
